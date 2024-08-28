@@ -13,5 +13,26 @@ import org.springframework.context.annotation.Profile;
 @Profile("test")
 @Configuration
 public class NameServiceTestConfiguration {
-   // your mock conf
+    @Bean
+    FlowerController flowerControllerBean(){
+        return Mockito.mock(FlowerController.class);
+    }
+    @Bean
+    FlowerService flowerServiceBean(){
+        return Mockito.mock(FlowerService.class);
+    }
+
+    @Bean
+    MessageController messageControllerBean(){
+        return Mockito.mock(MessageController.class);
+    }
+    @Bean
+    MessageService messageServiceBean(){
+        return Mockito.mock(MessageService.class);
+    }
+
+    @Bean
+    UserService userServiceBean(){
+        return Mockito.mock(UserService.class);
+    }
 }

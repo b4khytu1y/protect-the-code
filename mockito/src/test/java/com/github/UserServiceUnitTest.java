@@ -19,5 +19,16 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
         Написать функцию для тестирования userService которая мокает nameService и возвращает "Mock user name"
 */
 public class UserServiceUnitTest {
-    // your solution
+    @Mock
+    private NameService nameService;
+    @InjectMocks
+    private UserService userService;
+
+    @Test
+    public void testGetUserName(){
+        String userId = "3as";
+        when(nameService.getUserName(eq("3as"))).thenReturn("Mock user name");
+
+        assertEquals("Mock user name", userService.getUserName("3as"));
+    }
 }
