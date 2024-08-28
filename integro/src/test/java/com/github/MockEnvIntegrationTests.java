@@ -1,5 +1,13 @@
 package com.github;
 
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import java.math.BigDecimal;
+
+import javax.money.Monetary;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -10,15 +18,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-
-import javax.money.CurrencyUnit;
-import javax.money.Monetary;
-import java.math.BigDecimal;
-
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -34,12 +33,31 @@ class MockEnvIntegrationTests {
     @Test
     void createOrder() throws Exception {
         // TODO: протестируйте успешное создание заказа на 100 евро
+        String jsonOrder = """
+                {
+                    "amount": "EUR100.0"
+                }
+                """;
+        mockMvc.perform(post("/order")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonOrder))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").exists());
     }
 
     @Test
     @Sql("/unpaid-order.sql")
     void payOrder() throws Exception {
+        String paymentReq = """
+                {
+                    "creditCardNumber": "3305649800973921"
+                }
+                """;
         // TODO: протестируйте успешную оплату ранее созданного заказа валидной картой
+        mockMvc.perform(post("/order/{id}/payment", 1)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(paymentReq))
+                .andExpect(status().isCreated());
     }
 
     @Test
@@ -47,5 +65,12 @@ class MockEnvIntegrationTests {
     void getReceipt() throws Exception {
         // TODO: Протестируйте получение чека на заказ №1 c currency = USD
         // Примечание: используйте мок для ExchangeRateClient
+        when(exchangeRateClient.getExchangeRate(
+                Monetary.getCurrency("EUR"),
+                Monetary.getCurrency("USD")))
+                .thenReturn(BigDecimal.valueOf(0.8412));
+
+        mockMvc.perform(get("/order/{id}/receipt?currency=USD", 1))
+                .andExpect(status().isOk());
     }
 }
